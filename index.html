@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1565C0">
+<title>Essencare</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root{--fs:1;--c-work:#EA580C;--c-kcal:#15803D;--c-water:#1565C0;--c-pee:#CA8A04;--c-pup:#92400E;--c-cycle:#DB2777;--c-lut:#7C3AED;--card:#fff;--ink:#0B2545;--blue:#1565C0;--blue2:#0D47A1;--sky:#E8F1FC;--mist:#F5F8FD;--line:#D9E4F4;--mute:#5B6F8C;--bad:#C0392B}
+:root[data-theme=dark]{color-scheme:dark;--ink:#E6EEF9;--blue:#2F7FD8;--blue2:#A9D1FA;--sky:#1B2C4A;--mist:#0E1726;--card:#16223A;--line:#26385A;--mute:#9AACC8;--bad:#FF7A6B;--c-work:#FB923C;--c-kcal:#4ADE80;--c-water:#60A5FA;--c-pee:#FACC15;--c-pup:#D6A15E;--c-cycle:#F472B6;--c-lut:#A78BFA}
+*{box-sizing:border-box;margin:0}
+body{font:calc(16px*var(--fs))/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--mist);-webkit-tap-highlight-color:transparent}
+h1,h2,.num{font-family:"Iowan Old Style",Georgia,"Times New Roman",serif;font-weight:600}
+#app{max-width:520px;margin:auto;min-height:100vh}
+main{padding:calc(22px + env(safe-area-inset-top)) 20px 120px}
+h1{font-size:calc(28px*var(--fs));line-height:1.2}
+h2{font-size:calc(19px*var(--fs));margin:28px 0 10px}
+.mute,li span,label{color:var(--mute)}
+.mute{font-size:calc(14px*var(--fs));margin-top:2px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.num{font-size:calc(36px*var(--fs));line-height:1}
+.note{background:var(--sky);border-radius:14px;padding:14px 16px;font-size:calc(15px*var(--fs))}
+.f,.meter,.list{background:var(--card);border:1px solid var(--line);border-radius:18px}
+.f{padding:16px;display:grid;gap:12px;margin-top:16px}
+.meter{padding:16px;margin-top:16px}
+.meter div{display:flex;justify-content:space-between;align-items:baseline}
+.pct{display:block;font-size:calc(13px*var(--fs));color:var(--mute)}
+.pct b{color:var(--blue);font-weight:600}
+.meter .mm{display:block;flex:1;min-width:0}
+.meter.w{display:flex;align-items:center;gap:14px}
+.sip{white-space:nowrap;padding:10px 14px}
+.bar{height:10px;background:var(--sky);border-radius:9px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:var(--blue);border-radius:9px}
+label{display:grid;gap:4px;font-size:calc(13px*var(--fs));font-weight:500}
+input,select{font:inherit;color:var(--ink);padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--mist);width:100%}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{font:inherit;font-weight:600;background:var(--blue);color:#fff;border:0;border-radius:12px;padding:12px 16px;cursor:pointer}
+.btn.alt{background:var(--sky);color:var(--blue2)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.row .btn{flex:1}
+.list{list-style:none;padding:0}
+.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.list li:last-child{border:0}
+.list b{display:block;font-weight:600}
+.list span{font-size:calc(13px*var(--fs))}
+.x{border:0;background:none;font-size:calc(22px*var(--fs));color:var(--mute);cursor:pointer;padding:4px 8px}
+.empty{color:var(--mute);font-size:calc(14px*var(--fs));padding:4px 2px}
+.link{background:none;border:0;color:var(--blue);font:inherit;font-size:calc(14px*var(--fs));cursor:pointer;padding:8px 0}
+.auth{padding:56px 24px;text-align:center;max-width:420px;margin:auto}
+.auth img{width:96px;height:auto}
+.auth form{display:grid;gap:12px;text-align:left;margin-top:24px}
+.err{color:var(--bad);font-size:calc(14px*var(--fs));min-height:20px}
+.foot{font-size:calc(12px*var(--fs));color:var(--mute);margin-top:28px;text-align:center}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--card);border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0;padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+nav div{display:flex}
+nav button{flex:1;border:0;background:none;font:inherit;font-size:calc(11px*var(--fs));color:var(--mute);display:grid;justify-items:center;gap:2px;padding:6px 0;cursor:pointer}
+nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav .on{color:var(--blue);font-weight:600}
+nav .on svg{stroke-width:2.3}
+#toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:var(--mist);padding:10px 16px;border-radius:12px;font-size:calc(14px*var(--fs));opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
+#toast.on{opacity:1}
+label[hidden]{display:none}
+.cb{position:relative}
+.fl{list-style:none;padding:4px;position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;max-height:240px;overflow:auto;z-index:5;box-shadow:0 8px 24px rgba(11,37,69,.14)}
+.fl[hidden]{display:none}
+.fl button{width:100%;text-align:left;background:none;border:0;font:inherit;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--ink)}
+.fl button:hover,.fl button:focus-visible{background:var(--sky)}
+.brand{display:none}
+.dlg{position:fixed;inset:0;background:rgba(11,37,69,.45);display:grid;place-items:center;padding:20px;z-index:10}
+.dlg form{background:var(--card);border-radius:18px;padding:20px;max-width:380px;width:100%;display:grid;gap:14px;max-height:92vh;overflow:auto}
+.dlg p{font-weight:600}
+.g2{display:grid;gap:0 16px}
+.dt{display:flex;justify-content:space-between;align-items:center;margin-top:22px}
+.dt h2{margin:0}
+.rst{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:var(--card);color:var(--mute);cursor:pointer}
+.rst:hover{color:var(--blue);border-color:var(--blue)}
+.rst svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sm{display:flex;align-items:center;gap:18px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;margin-top:12px;background-image:linear-gradient(135deg,color-mix(in srgb,var(--blue) 9%,transparent),transparent 60%)}
+.rg{position:relative;width:112px;height:112px;flex:none}
+.rg svg{width:100%;height:100%;transform:rotate(-90deg)}
+.rg circle{fill:none;stroke-width:11}
+.rg .t{stroke:var(--sky)}.rg .p{stroke:var(--blue);stroke-linecap:round;transition:stroke-dashoffset .5s}
+.rg div{position:absolute;inset:0;display:grid;place-content:center;text-align:center;font-family:"Iowan Old Style",Georgia,serif;font-weight:600;font-size:calc(26px*var(--fs));line-height:1}
+.rg small{display:block;font:500 calc(11px*var(--fs)) system-ui,sans-serif;color:var(--mute);margin-top:3px}
+.sm h3{font:600 calc(17px*var(--fs)) "Iowan Old Style",Georgia,serif;margin:0}
+.sm p{font-size:calc(14px*var(--fs));color:var(--mute);margin:2px 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:6px;font-size:calc(12px*var(--fs));font-weight:500;padding:5px 10px;border-radius:99px;background:color-mix(in srgb,var(--ac) 13%,transparent);color:var(--ink)}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--ac)}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.dc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dh b{font-size:calc(12px*var(--fs));font-weight:600;padding:3px 9px;border-radius:99px;background:color-mix(in srgb,var(--ac) 14%,transparent);color:var(--ac)}
+.ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--ac) 15%,transparent);color:var(--ac);flex:none}
+.ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.dl{font-size:calc(13px*var(--fs));font-weight:500;color:var(--mute)}
+.dn{font-family:"Iowan Old Style",Georgia,"Times New Roman",serif;font-weight:600;font-size:calc(28px*var(--fs));line-height:1.15}
+.dn small{font:400 calc(13px*var(--fs)) system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--mute)}
+.dc .bar{margin:6px 0 2px;background:color-mix(in srgb,var(--ac) 14%,transparent)}
+.dc .bar i{background:var(--ac)}
+.dc p{font-size:calc(12px*var(--fs));color:var(--mute);line-height:1.4}
+.ht3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px auto 0;max-width:560px}
+.ht{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:inherit;color:var(--ink);text-align:center;background:var(--card);border:1px solid var(--line);border-radius:22px;cursor:pointer;padding:0}
+.ht:hover,.ht:focus-visible{border-color:var(--ac)}
+.ht .hl{font-size:calc(14px*var(--fs));font-weight:600}
+.ht .ic{width:68px;height:68px;border-radius:22px}
+.ht .ic svg{width:32px;height:32px}
+@media(max-width:520px){.ht{gap:8px}.ht .ic{width:50px;height:50px;border-radius:16px}.ht .ic svg{width:26px;height:26px}.ht .hl{font-size:calc(12px*var(--fs))}}
+.pn{display:grid;gap:12px;margin-top:12px}
+.pc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;min-width:0}
+.pc h3{font:600 calc(16px*var(--fs)) "Iowan Old Style",Georgia,serif;margin:0 0 10px}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tabs button{font:inherit;font-size:calc(13px*var(--fs));font-weight:500;border:0;border-radius:99px;padding:6px 14px;cursor:pointer;background:var(--sky);color:var(--blue2)}
+.tabs .on{background:var(--ac);color:#fff}
+.tb{position:relative;height:130px;display:flex;gap:8px;align-items:flex-end}
+.tb div{flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center}
+.tb i{display:block;width:100%;max-width:38px;border-radius:9px 9px 4px 4px;background:color-mix(in srgb,var(--ac) 40%,transparent);min-height:3px}
+.tb .now i{background:var(--ac)}
+.tg{position:absolute;left:0;right:0;border-top:1.5px dashed var(--mute);opacity:.55;pointer-events:none}
+.tl{display:flex;gap:8px;margin-top:6px}
+.tl span{flex:1;text-align:center;font-size:calc(11px*var(--fs));color:var(--mute)}
+.tl .now{color:var(--ink);font-weight:600}
+.ts{font-size:calc(13px*var(--fs));color:var(--mute);margin-top:12px}
+.ac{list-style:none;padding:0;display:grid;gap:12px}
+.ac li{display:flex;align-items:center;gap:12px}
+.ac .ic{width:34px;height:34px;border-radius:10px}
+.ac b{display:block;font-weight:600;font-size:calc(14px*var(--fs))}
+.ac span{font-size:calc(12px*var(--fs));color:var(--mute)}
+.hg{display:grid;gap:14px;margin-top:18px}
+.hc{font:inherit;text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;cursor:pointer;display:grid;gap:4px}
+.hc:hover{border-color:var(--blue)}
+.hc b{font-size:calc(15px*var(--fs));display:flex;justify-content:space-between;align-items:center}
+.hc b i{font-style:normal;color:var(--mute);font-weight:400}
+.hc .num{font-size:calc(30px*var(--fs));color:var(--blue)}
+.hc span{font-size:calc(13px*var(--fs));color:var(--mute)}
+.hc .bar{margin:8px 0 2px}
+.an{cursor:default}.an:hover{border-color:var(--line)}
+.ch{display:flex;align-items:flex-end;gap:3px;height:84px;margin-top:10px}
+.ch i{flex:1;background:var(--blue);border-radius:4px 4px 0 0;min-height:3px}
+.ch i.lo{background:#9DBFEA}
+.ch i.z{background:var(--line)}
+.ax{display:flex;justify-content:space-between;font-size:calc(11px*var(--fs));color:var(--mute);margin-top:4px}
+.seg{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.st{margin-top:22px}.st h2{margin:0 0 4px}.st .seg{margin-top:10px}.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:calc(14px*var(--fs))}.kv span:first-child{color:var(--mute)}.kv span:last-child{text-align:right;word-break:break-all}.seg .btn{flex:0 0 auto;padding:8px 18px;font-size:calc(14px*var(--fs))}
+@media(min-width:900px){
+.hg{grid-template-columns:1fr 1fr}
+.dg{grid-template-columns:repeat(3,1fr)}
+.pn{grid-template-columns:3fr 2fr}
+#app{max-width:none;margin:0}
+main{padding:44px max(40px,calc((100vw - 980px)/2)) 120px}
+h1{font-size:calc(34px*var(--fs))}
+.num{font-size:calc(44px*var(--fs))}
+.g2{grid-template-columns:1fr 1fr}
+.fd{grid-template-columns:minmax(0,2.4fr) minmax(0,1fr) minmax(0,1fr) auto;align-items:end;gap:12px 16px}
+.fd .two{display:contents}
+.fd #mn:not([hidden]){grid-column:1/-1}
+.fd .btn{white-space:nowrap;padding:12px 28px}
+nav{max-width:640px}
+}
+.pw{position:relative;margin-top:18px}
+.pb{display:flex;gap:3px;height:18px}
+.pb i{display:block;border-radius:6px;background:var(--ac);min-width:4px}
+.pf{position:relative;height:8px;margin-top:6px;background:color-mix(in srgb,var(--c-kcal) 12%,transparent);border-radius:6px}
+.pf i{position:absolute;top:0;bottom:0;background:var(--c-kcal);border-radius:6px}
+.pm{position:absolute;top:-6px;width:3px;height:30px;margin-left:-1.5px;border-radius:2px;background:var(--ink);pointer-events:none}
+.pa{display:flex;justify-content:space-between;font-size:calc(11px*var(--fs));color:var(--mute);margin-top:6px}
+.pl{list-style:none;padding:0;display:grid;gap:10px;margin-top:16px}
+.pl li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.pl li.cur{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,var(--card))}
+.pl .dot{width:12px;height:12px;border-radius:50%;background:var(--ac);margin-top:5px;flex:none}
+.pl b{display:flex;justify-content:space-between;gap:8px;font-size:calc(15px*var(--fs))}
+.pl b em{font-style:normal;font-size:calc(11px*var(--fs));font-weight:600;padding:2px 8px;border-radius:99px;background:var(--ac);color:#fff;align-self:center}
+.pl .dtl{display:block;font-size:calc(13px*var(--fs));color:var(--ink);margin-top:2px}
+.pl p{font-size:calc(13px*var(--fs));color:var(--mute);margin-top:2px;line-height:1.4}
+.cal{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin:14px auto 0;max-width:340px}
+.clh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.clh b{font:600 calc(16px*var(--fs)) "Iowan Old Style",Georgia,serif;text-transform:capitalize}
+.clh .rst{width:34px;height:34px;font-size:calc(18px*var(--fs));line-height:1}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cg>span{text-align:center;font-size:calc(11px*var(--fs));color:var(--mute);padding-bottom:2px}
+.cd{height:34px;display:grid;place-items:center;font:500 calc(12px*var(--fs)) system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:none;border:1.5px solid transparent;border-radius:8px;padding:0;cursor:pointer;min-width:0}
+.cd.e{cursor:default}
+.cd.h{background:var(--ac);color:#fff}
+.cd.hp{background:color-mix(in srgb,var(--ac) 14%,transparent);border:1.5px dashed var(--ac)}
+.cd.o{background:var(--ac);color:#fff}
+.cd.f,.cd.l{background:color-mix(in srgb,var(--ac) 14%,transparent)}
+.cd.sf{box-shadow:inset 0 -3px 0 var(--c-kcal)}
+.cd.td{font-weight:700;outline:1.5px solid var(--ink);outline-offset:0}
+.cd.sl{border-color:var(--blue)}
+.cd.sl:not(.h):not(.o){background:var(--sky)}
+.cdt{margin-top:10px;font-size:calc(13px*var(--fs));background:var(--sky);border-radius:12px;padding:10px 12px}
+.cgd{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.cgd .chip i.d{background:none;border:1.5px dashed var(--ac)}
+.cgd .chip i.b{border-radius:2px;height:4px;width:12px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"><p class="mute" style="padding:40px;text-align:center">Memuat…</p></div>
+<div id="toast" role="status"></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,collection,addDoc,deleteDoc,updateDoc,doc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyDgAI0u0Ygvm1D9IqE29rCHXEuvUYrj6M0",
+  authDomain:"essencare-f0306.firebaseapp.com",
+  projectId:"essencare-f0306",
+  storageBucket:"essencare-f0306.firebasestorage.app",
+  messagingSenderId:"675335161840",
+  appId:"1:675335161840:web:d3fda13791c2622559ff35"
+};
+const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
+
+const LOGO='data:image/png;base64,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';
+const $=s=>document.querySelector(s);
+document.querySelector('link[rel=icon]').href=LOGO;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ymd=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const TODAY=()=>ymd(new Date());
+const dd=(a,b)=>Math.round((Date.parse(a)-Date.parse(b))/864e5);
+const addD=(s,n)=>new Date(Date.parse(s)+n*864e5).toISOString().slice(0,10);
+const iso2id=s=>s?s.split('-').reverse().join('/'):'';
+const id2iso=s=>{const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec((s||'').trim());if(!m)return null;
+  const dt=new Date(`${m[3]}-${m[2]}-${m[1]}T12:00`);
+  return dt.getFullYear()==m[3]&&dt.getMonth()+1==+m[2]&&dt.getDate()==+m[1]?`${m[3]}-${m[2]}-${m[1]}`:null};
+const fd=iso2id;
+const ft=t=>new Date(t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+const when=l=>(l.date===TODAY()?'Hari ini':fd(l.date))+', '+ft(l.ts);
+const fv=e=>Object.fromEntries(new FormData(e.target));
+const goal=Object.assign({kcal:2000,water:2000,wmin:30,wkcal:200},JSON.parse(localStorage.getItem('ec_goal')||'{}'));
+const ui=Object.assign({theme:'light',fs:'m'},JSON.parse(localStorage.getItem('ec_ui')||'{}'));
+const FS={s:.9,m:1,l:1.15,xl:1.3},mq=matchMedia('(prefers-color-scheme: dark)');
+function applyUi(){const dk=ui.theme==='dark'||(ui.theme==='auto'&&mq.matches),r=document.documentElement;
+  r.dataset.theme=dk?'dark':'light';r.style.setProperty('--fs',FS[ui.fs]||1);
+  document.querySelector('meta[name=theme-color]').content=dk?'#0E1726':'#1565C0'}
+mq.addEventListener('change',()=>{if(ui.theme==='auto')applyUi()});
+applyUi();
+
+let user=null,logs=[],tab='home',unsub=null,signup=false,authErr='';
+const A=window.A={};
+const ofType=(...t)=>logs.filter(l=>t.includes(l.type));
+const sum=(t,k,date=TODAY())=>ofType(t).filter(l=>l.date===date).reduce((a,l)=>a+(+l[k]||0),0);
+
+function ask(msg,fields,ok='OK',fn){return new Promise(res=>{
+  const d=document.createElement('div');d.className='dlg';
+  d.innerHTML=`<form><p>${msg}</p>${fields||''}<div class="row"><button type="button" class="btn alt" data-n>Batal</button><button class="btn">${ok}</button></div></form>`;
+  document.body.appendChild(d);const done=v=>{d.remove();res(v)};
+  d.querySelector('[data-n]').onclick=()=>done(null);
+  d.onclick=e=>{if(e.target===d)done(null)};
+  if(fn)d.querySelector('form').addEventListener('input',e=>fn(e.currentTarget,e));
+  d.querySelector('form').onsubmit=e=>{e.preventDefault();done(Object.fromEntries(new FormData(e.target)))};
+  const i=d.querySelector('input');i?i.focus():d.querySelector('.btn:not(.alt)').focus()})}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2600)}
+const col=()=>collection(db,'users',user.uid,'logs');
+const add=(type,o)=>run(()=>addDoc(col(),{type,date:TODAY(),ts:Date.now(),...o}));
+async function run(f){try{await f()}catch(e){toast('Gagal menyimpan. Periksa aturan Firestore.')}}
+
+/* ---------- Auth ---------- */
+const ERR={'auth/invalid-credential':'Email atau kata sandi salah.','auth/invalid-email':'Format email tidak valid.','auth/email-already-in-use':'Email sudah terdaftar. Silakan masuk.','auth/weak-password':'Kata sandi minimal 6 karakter.','auth/too-many-requests':'Terlalu banyak percobaan. Coba lagi nanti.','auth/network-request-failed':'Tidak ada koneksi internet.'};
+function authView(){
+  $('#app').innerHTML=`<div class="auth"><img src="${LOGO}" alt="Essencare"><h1 style="margin-top:14px">Essencare</h1>
+  <p class="mute">Catat kesehatanmu dengan tenang.</p>
+  <form onsubmit="return A.auth(event)">
+  <label>Email<input name="e" type="email" autocomplete="email" required></label>
+  <label>Kata sandi<input name="p" type="password" autocomplete="${signup?'new':'current'}-password" minlength="6" required></label>
+  <p class="err" role="alert">${esc(authErr)}</p>
+  <button class="btn">${signup?'Buat akun':'Masuk'}</button>
+  <button type="button" class="link" onclick="A.mode()">${signup?'Sudah punya akun? Masuk':'Belum punya akun? Daftar'}</button>
+  ${signup?'':'<button type="button" class="link" onclick="A.reset()">Lupa kata sandi</button>'}
+  </form></div>`;
+}
+A.mode=()=>{signup=!signup;authErr='';authView()};
+A.auth=async e=>{e.preventDefault();const f=fv(e);authErr='';
+  try{await(signup?createUserWithEmailAndPassword:signInWithEmailAndPassword)(auth,f.e,f.p)}
+  catch(x){authErr=ERR[x.code]||'Terjadi kesalahan. Coba lagi.';authView();$('input[name=e]').value=f.e}
+  return false};
+A.reset=async()=>{const m=$('input[name=e]').value.trim();if(!m)return toast('Isi email dulu.');
+  try{await sendPasswordResetEmail(auth,m);toast('Tautan reset dikirim ke email.')}catch(x){toast(ERR[x.code]||'Gagal mengirim tautan.')}};
+A.out=async()=>{if(await ask('Keluar dari Essencare?',0,'Keluar'))signOut(auth)};
+
+onAuthStateChanged(auth,u=>{
+  unsub&&unsub();unsub=null;user=u;logs=[];
+  if(!u)return authView();
+  unsub=onSnapshot(col(),s=>{logs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.ts-a.ts);render()},()=>toast('Data tidak bisa dimuat. Periksa aturan Firestore.'));
+  render();
+});
+
+/* ---------- Actions ---------- */
+A.clearToday=async()=>{const t=logs.filter(l=>l.date===TODAY()&&l.type!=='period');
+  if(!t.length)return toast('Belum ada catatan hari ini.');
+  if(await ask(`Hapus ${t.length} catatan hari ini? Tindakan ini tidak bisa dibatalkan.`,0,'Reset'))
+    run(async()=>{await Promise.all(t.map(l=>deleteDoc(doc(db,'users',user.uid,'logs',l.id))));toast('Data hari ini sudah direset.')})};
+A.go=t=>{tab=t;render();scrollTo(0,0)};
+A.del=async id=>{if(await ask('Hapus catatan ini?',0,'Hapus'))run(()=>deleteDoc(doc(db,'users',user.uid,'logs',id)))};
+A.work=e=>{e.preventDefault();const f=fv(e);add('workout',{name:f.n,min:+f.m,kcal:+f.k||0});return false};
+A.meal=e=>{e.preventDefault();const f=fv(e),p=+f.p||1;
+  if(!f.n){toast('Pilih makanan dari daftar.');return false}
+  add('meal',{name:f.n==='_'?f.x.trim():(p===1?f.n:`${f.n} ×${p}`),kcal:+f.k});return false};
+A.water=ml=>add('water',{ml});
+const SIP=30;
+A.sip=()=>{add('water',{ml:SIP});toast(`+1 teguk (${SIP} ml)`)};
+A.quick=t=>add(t,{});
+A.pee=e=>{e.preventDefault();add('pee',{color:fv(e).c});return false};
+A.pup=e=>{e.preventDefault();add('pup',{bristol:+fv(e).b});return false};
+A.dmask=el=>{let v=el.value.replace(/\D/g,'').slice(0,8);
+  if(v.length>4)v=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);else if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);el.value=v};
+A.period=e=>{e.preventDefault();const f=fv(e),d=id2iso(f.d),x=f.e?id2iso(f.e):'';
+  if(!d||(f.e&&!x)){toast('Format tanggal harus dd/mm/yyyy.');return false}
+  if(d>TODAY()||(x&&x>TODAY())){toast('Tanggal tidak boleh di masa depan.');return false}
+  if(x&&x<d){toast('Tanggal selesai tidak boleh sebelum tanggal mulai.');return false}
+  if(ofType('period').some(l=>l.start===d)){toast('Haid dengan tanggal mulai itu sudah tercatat.');return false}
+  add('period',x?{start:d,end:x,date:d}:{start:d,date:d});return false};
+A.end=id=>run(()=>updateDoc(doc(db,'users',user.uid,'logs',id),{end:TODAY()}));
+const so=(a,c)=>a.map(([v,t])=>`<option value="${v}"${String(v)===String(c)?' selected':''}>${t}</option>`).join('');
+function calc(f,e){
+  if(e&&(e.target.name==='k'||e.target.name==='w'))return;
+  const E=f.elements,a=+E.a.value,h=+E.h.value,b=+E.b.value,o=f.querySelector('#cr');
+  if(!(a>0&&h>0&&b>0)){o.textContent='Isi usia, tinggi, dan berat untuk menghitung otomatis.';return}
+  const bmr=10*b+6.25*h-5*a+(E.s.value==='p'?5:-161),g=+E.tj.value;
+  let t=bmr*+E.act.value;t=g<0?Math.max(t+g,bmr):t+g;t=Math.round(t/10)*10;
+  E.k.value=t;E.w.value=Math.round(Math.min(3000,Math.max(1500,b*30))/50)*50;
+  o.textContent=`Kebutuhan dasar tubuh ${Math.round(bmr)} kkal. Saran: ${t} kkal dan ${E.w.value} ml air per hari.`}
+A.goal=async()=>{const p=goal.p||{};
+  const r=await ask('Hitung dan ubah target harian',`<div class="two"><label>Jenis kelamin<select name="s">${so([['p','Pria'],['w','Wanita']],p.s)}</select></label><label>Usia (tahun)<input name="a" type="number" min="10" max="100" value="${p.a||''}"></label></div>
+  <div class="two"><label>Tinggi (cm)<input name="h" type="number" min="100" max="250" value="${p.h||''}"></label><label>Berat (kg)<input name="b" type="number" min="20" max="300" step="0.1" value="${p.b||''}"></label></div>
+  <label>Aktivitas<select name="act">${so([[1.2,'Duduk seharian, jarang olahraga'],[1.375,'Olahraga ringan 1-3 kali seminggu'],[1.55,'Olahraga 3-5 kali seminggu'],[1.725,'Sangat aktif']],p.act||1.2)}</select></label>
+  <label>Tujuan<select name="tj">${so([[0,'Jaga berat badan'],[-400,'Turunkan berat badan'],[300,'Naikkan berat badan']],p.tj||0)}</select></label>
+  <p id="cr" class="mute">Isi usia, tinggi, dan berat untuk menghitung otomatis.</p>
+  <div class="two"><label>Target kalori (kkal)<input name="k" type="number" min="1" value="${goal.kcal}"></label><label>Target air (ml)<input name="w" type="number" min="1" value="${goal.water}"></label></div>`,'Simpan',calc);
+  if(!r)return;const k=parseInt(r.k),w=parseInt(r.w),b=parseFloat(r.b);
+  if(k>0)goal.kcal=k;if(w>0)goal.water=w;if(b>0)goal.kg=b;
+  goal.p={s:r.s,a:r.a,h:r.h,b:r.b,act:r.act,tj:r.tj};
+  localStorage.setItem('ec_goal',JSON.stringify(goal));render()};
+
+A.wgoal=async()=>{
+  const r=await ask('Target olahraga harian',`<div class="two"><label>Durasi (menit)<input name="m" type="number" min="1" value="${goal.wmin}"></label><label>Kalori terbakar (kkal)<input name="k" type="number" min="1" value="${goal.wkcal}"></label></div>`,'Simpan');
+  if(!r)return;const m=parseInt(r.m),k=parseInt(r.k);
+  if(m>0)goal.wmin=m;if(k>0)goal.wkcal=k;
+  localStorage.setItem('ec_goal',JSON.stringify(goal));render()};
+
+/* ---------- Helpers ---------- */
+const li=(l,t,s)=>`<li><div><b>${t}</b><span>${s}</span></div><button class="x" aria-label="Hapus" onclick="A.del('${l.id}')">×</button></li>`;
+const list=(a,fn,msg)=>a.length?`<ul class="list">${a.slice(0,30).map(fn).join('')}</ul>`:`<p class="empty">${msg}</p>`;
+const bar=(v,g,label,unit,x='')=>`<div class="meter${x?' w':''}"><div class="mm"><div><b>${label}</b><span class="mute">${v} / ${g} ${unit}</span></div><div class="bar"><i style="width:${Math.min(100,v/g*100)}%"></i></div><small class="pct"><b>${Math.round(v/g*100)}%</b> tercapai</small></div>${x}</div>`;
+const opts=a=>a.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+
+function cyc(){
+  const p=ofType('period').sort((a,b)=>a.start<b.start?-1:1);if(!p.length)return null;
+  const last=p[p.length-1];let avg=28;
+  if(p.length>1){const g=p.slice(1).map((x,i)=>dd(x.start,p[i].start));avg=Math.round(g.reduce((a,b)=>a+b,0)/g.length)}
+  avg=Math.min(45,Math.max(21,avg));
+  const next=addD(last.start,avg);
+  return{last,avg,next,day:dd(TODAY(),last.start)+1,left:dd(next,TODAY()),open:!last.end&&dd(TODAY(),last.start)<10,n:p.length}
+}
+function cycText(c){
+  if(!c)return'Belum ada data siklus. Catat hari pertama haidmu di tab Siklus.';
+  if(c.open)return`Sedang haid, hari ke-${c.day}.`;
+  return c.left>=0?`Haid berikutnya sekitar ${fd(c.next)}, ${c.left} hari lagi.`:`Haid terlambat ${-c.left} hari dari perkiraan.`
+}
+
+/* ---------- Views ---------- */
+let dtab='kcal';
+A.dtab=k=>{dtab=k;render()};
+const IC={work:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',kcal:'<path d="M12 7c-2-2-6-1-7 3s2 10 7 10 8-6 7-10-5-5-7-3z"/><path d="M12 7c0-2 1-4 3-5"/>',water:'<path d="M6 3h12l-1.5 17a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z"/><path d="M7 9h10"/>',pee:'<path d="M12 4c3 4 5 6.5 5 9a5 5 0 0 1-10 0c0-2.5 2-5 5-9z"/>',pup:'<path d="M12 4c1 2-1 3 0 4 2 0 4 2 4 4 2 0 3 2 3 4 0 2-2 4-4 4H8c-2 0-4-2-4-4 0-2 1-4 3-4 0-2 2-4 4-4-1-1-1-3 1-4z"/>',cycle:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/>'};
+function vHome(){
+  const t=TODAY(),h=new Date().getHours(),g=h<11?'Selamat pagi':h<15?'Selamat siang':h<18?'Selamat sore':'Selamat malam';
+  const days=Array.from({length:7},(_,i)=>addD(t,i-6));
+  const wk=ofType('workout').filter(l=>l.date>=days[0]).reduce((a,l)=>a+(+l.min||0),0);
+  const cn=ty=>ofType(ty).filter(l=>l.date===t).length,av=ty=>(ofType(ty).filter(l=>l.date>=days[0]).length/7).toFixed(1).replace('.',',');
+  const kc=sum('meal','kcal'),ml=sum('water','ml'),c=cyc();
+  const pc=(v,g)=>Math.round(v/g*100),cap=x=>Math.min(1,x);
+  const wm=sum('workout','min'),wkc=sum('workout','kcal'),pw=cap(wm/goal.wmin),pk=cap(kc/goal.kcal),pa=cap(ml/goal.water),score=Math.round((pw+pk+pa)/3*100);
+  const msg=score>=100?'Semua target tercapai, kerja bagus!':score>=60?'Hampir sampai, terus semangat!':score>0?'Sudah mulai, lanjutkan ya.':'Belum ada catatan. Yuk mulai hari ini.';
+  const R=50,C=2*Math.PI*R;
+  const chip=(ac,n,p)=>`<span class="chip" style="--ac:var(--${ac})"><i></i>${n} ${Math.round(p*100)}%</span>`;
+  const kpi=(ac,ti,pct,big,unit,sub,bar)=>`<div class="dc" style="--ac:var(--${ac})"><div class="dh"><span class="ic"><svg viewBox="0 0 24 24">${IC[ac.slice(2)]}</svg></span>${pct===null?'':`<b>${pct}%</b>`}</div><div class="dl">${ti}</div><div class="dn">${big}<small>${unit}</small></div>${bar===null?'':`<div class="bar"><i style="width:${Math.min(100,bar)}%"></i></div>`}<p>${sub}</p></div>`;
+  const rest=(v,g,u)=>v>=g?'Target tercapai.':`Sisa ${g-v} ${u} menuju target.`;
+  const cb=!c?'-':c.open?'Hari '+c.day:(c.left>=0?c.left:-c.left),cu=!c?'':c.open?' haid berjalan':c.left>=0?' hari lagi':' hari terlambat';
+  const TR={work:{n:'Olahraga',ac:'c-work',u:'menit',v:days.map(d=>sum('workout','min',d)),g:goal.wmin},kcal:{n:'Kalori',ac:'c-kcal',u:'kkal',v:days.map(d=>sum('meal','kcal',d)),g:goal.kcal},water:{n:'Air minum',ac:'c-water',u:'ml',v:days.map(d=>sum('water','ml',d)),g:goal.water}};
+  const T=TR[dtab],mx=Math.max(T.g,...T.v,1),tot=T.v.reduce((a,b)=>a+b,0);
+  const wd=d=>new Date(d+'T12:00').toLocaleDateString('id-ID',{weekday:'short'});
+  const chart=`<div class="tabs" style="--ac:var(--${T.ac})">${Object.entries(TR).map(([k,o])=>`<button class="${k===dtab?'on':''}" style="--ac:var(--${o.ac})" onclick="A.dtab('${k}')">${o.n}</button>`).join('')}</div>
+  <div class="tb" style="--ac:var(--${T.ac})">${T.g?`<span class="tg" style="bottom:${T.g/mx*100}%" title="Target ${T.g} ${T.u}"></span>`:''}${T.v.map((x,i)=>`<div class="${i===6?'now':''}"><i style="height:${x/mx*100}%" title="${fd(days[i])}: ${x} ${T.u}"></i></div>`).join('')}</div>
+  <div class="tl">${days.map((d,i)=>`<span class="${i===6?'now':''}">${wd(d)}</span>`).join('')}</div>
+  <p class="ts">Rata-rata ${Math.round(tot/7)} ${T.u} per hari, total ${tot} ${T.u}${T.g?`. Garis putus-putus adalah target harian (${T.g} ${T.u}).`:'.'}</p>`;
+  const ACT={workout:l=>['work',`${esc(l.name)}, ${l.min} menit`],meal:l=>['kcal',`${esc(l.name)}, ${l.kcal} kkal`],water:l=>['water',`Minum ${l.ml} ml`],pee:l=>['pee','Pee'],pup:l=>['pup','Pup'],period:l=>['cycle','Mulai haid']};
+  const recent=logs.filter(l=>ACT[l.type]).slice(0,6).map(l=>{const[a,tt]=ACT[l.type](l);return`<li style="--ac:var(--c-${a})"><span class="ic"><svg viewBox="0 0 24 24">${IC[a]}</svg></span><div><b>${tt}</b><span>${when(l)}</span></div></li>`}).join('');
+  return`<div class="top"><div><h1>${g}</h1><p class="mute">${new Date().toLocaleDateString('id-ID',{weekday:'long'})}, ${fd(t)}</p></div><button class="link" onclick="A.out()">Keluar</button></div>
+  <div class="dt"><h2>Ringkasan hari ini</h2><button class="rst" onclick="A.clearToday()" aria-label="Reset data hari ini" title="Reset data hari ini"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button></div>
+  <section class="sm"><div class="rg"><svg viewBox="0 0 120 120"><circle class="t" cx="60" cy="60" r="${R}"/><circle class="p" cx="60" cy="60" r="${R}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-score/100)).toFixed(1)}"/></svg><div>${score}%<small>target</small></div></div>
+  <div><h3>Progres target hari ini</h3><p>${msg}</p><div class="chips">${chip('c-work','Olahraga',pw)}${chip('c-kcal','Kalori',pk)}${chip('c-water','Air',pa)}</div></div></section>
+  <div class="dg">
+  ${kpi('c-work','Olahraga',pc(wm,goal.wmin),wm,' / '+goal.wmin+' menit',`Terbakar ${wkc} dari ${goal.wkcal} kkal. 7 hari: ${wk} menit.`,wm/goal.wmin*100)}
+  ${kpi('c-kcal','Kalori',pc(kc,goal.kcal),kc,' / '+goal.kcal+' kkal',rest(kc,goal.kcal,'kkal'),kc/goal.kcal*100)}
+  ${kpi('c-water','Air minum',pc(ml,goal.water),ml,' / '+goal.water+' ml',rest(ml,goal.water,'ml'),ml/goal.water*100)}
+  ${kpi('c-pee','Pee',null,cn('pee'),' kali hari ini',`Rata-rata 7 hari: ${av('pee')} kali per hari.`,null)}
+  ${kpi('c-pup','Pup',null,cn('pup'),' kali hari ini',`Rata-rata 7 hari: ${av('pup')} kali per hari.`,null)}
+  ${kpi('c-cycle','Siklus',c?pc(Math.min(c.day,c.avg),c.avg):null,cb,cu,c?cycText(c)+'<br><b style="color:var(--ac);font-weight:600">Fase: '+phNow(c)+'</b>':'Catat hari pertama haid di Kesehatan, Siklus.',c?c.day/c.avg*100:null)}
+  </div>
+  <div class="pn"><section class="pc"><h3>Tren 7 hari</h3>${chart}</section>
+  <section class="pc"><h3>Aktivitas terbaru</h3>${recent?`<ul class="ac">${recent}</ul>`:'<p class="empty">Belum ada aktivitas tercatat.</p>'}</section></div>`;
+}
+function vHealth(){
+  const T=[['work','c-work','Olahraga'],['diet','c-kcal','Kalori',IC.kcal],['diet','c-water','Air minum',IC.water],['cycle','c-cycle','Siklus',IC.cycle],['wc','c-pee','Pee',IC.pee],['wc','c-pup','Pup',IC.pup]];
+  return`<h1 style="text-align:center">Kesehatan</h1>
+  <div class="ht3">${T.map(([k,ac,n,ic])=>`<button class="ht" style="--ac:var(--${ac})" aria-label="${n}" title="${n}" onclick="A.go('${k}')"><span class="ic"><svg viewBox="0 0 24 24">${ic||IC.work}</svg></span><span class="hl">${n}</span></button>`).join('')}</div>`;
+}
+let range=7;
+A.range=n=>{range=n;render()};
+function vAnalysis(){
+  const t=TODAY(),n=range,days=Array.from({length:n},(_,i)=>addD(t,i-n+1)),prev=Array.from({length:n},(_,i)=>addD(t,i-2*n+1));
+  const sm=(ty,k,ds)=>ds.map(d=>sum(ty,k,d)),cnt=(ty,ds)=>ds.map(d=>ofType(ty).filter(l=>l.date===d).length);
+  const tot=a=>a.reduce((x,y)=>x+y,0),act=a=>a.filter(x=>x>0).length;
+  const avg=a=>act(a)?Math.round(tot(a)/act(a)):0;
+  const tr=(c,p)=>!p?(c?'Belum ada data periode sebelumnya':''):(c===p?'Sama dengan periode sebelumnya':(c>p?'Naik ':'Turun ')+Math.round(Math.abs(c-p)/p*100)+'% dari periode sebelumnya');
+  const chart=(a,g)=>{const mx=Math.max(g||0,...a,1);return`<div class="ch">${a.map((x,i)=>`<i class="${!x?'z':g&&x<g?'lo':''}" style="height:${Math.max(3,x/mx*100)}%" title="${fd(days[i])}: ${x}"></i>`).join('')}</div><div class="ax"><span>${fd(days[0])}</span><span>${fd(days[n-1])}</span></div>`};
+  const card=(ti,big,sub,ch)=>`<div class="hc an"><b>${ti}</b><div class="num">${big}</div><span>${sub}</span>${ch}</div>`;
+  const kc=sm('meal','kcal',days),kp=sm('meal','kcal',prev),ml=sm('water','ml',days),mp=sm('water','ml',prev),wk=sm('workout','min',days),wp=sm('workout','min',prev);
+  const pe=cnt('pee',days),pu=cnt('pup',days),br=ofType('pup').filter(l=>days.includes(l.date)&&l.bristol>0).map(l=>l.bristol);
+  const ses=ofType('workout').filter(l=>days.includes(l.date)).length;
+  const ps=ofType('period').sort((a,b)=>a.start<b.start?-1:1),gaps=ps.slice(1).map((x,i)=>dd(x.start,ps[i].start));
+  const c=cyc();
+  return`<h1>Analisis</h1><p class="mute">Perkembangan kesehatanmu dari catatan yang sudah ada.</p>
+  <div class="seg"><button class="btn${n===7?'':' alt'}" onclick="A.range(7)">7 hari</button><button class="btn${n===30?'':' alt'}" onclick="A.range(30)">30 hari</button></div>
+  <div class="hg">
+  ${card('Olahraga',tot(wk)+' menit',`${ses} sesi di ${act(wk)} hari aktif, terbakar ${tot(sm('workout','kcal',days))} kkal. Target ${goal.wmin} menit dan ${goal.wkcal} kkal per hari. ${tr(tot(wk),tot(wp))}`,chart(wk,goal.wmin))}
+  ${card('Kalori',avg(kc)+' kkal',`Rata-rata per hari tercatat (${act(kc)} dari ${n} hari). Target ${goal.kcal} kkal. ${tr(avg(kc),avg(kp))}`,chart(kc,goal.kcal))}
+  ${card('Air minum',avg(ml)+' ml',`Rata-rata per hari tercatat. Target tercapai ${ml.filter(x=>x>=goal.water).length} dari ${n} hari. ${tr(avg(ml),avg(mp))}`,chart(ml,goal.water))}
+  ${card('Pee',(tot(pe)/n).toFixed(1)+' kali',`Rata-rata per hari, total ${tot(pe)} kali`,chart(pe,0))}
+  ${card('Pup',(tot(pu)/n).toFixed(1)+' kali',br.length?`Rata-rata per hari, total ${tot(pu)} kali. Tekstur rata-rata tipe ${(tot(br)/br.length).toFixed(1)}`:`Rata-rata per hari, total ${tot(pu)} kali`,chart(pu,0))}
+  ${card('Siklus',c?c.avg+' hari':'Belum ada data',c?`Rata-rata panjang siklus dari ${ps.length} catatan haid${gaps.length>1?`. Rentang ${Math.min(...gaps)} sampai ${Math.max(...gaps)} hari`:''}. ${cycText(c)}`:'Catat hari pertama haid di fitur Kesehatan, Siklus.','')}
+  </div><p class="foot">Batang biru muda berarti belum mencapai target. Analisis ini berdasarkan catatanmu sendiri dan bukan pengganti saran dokter.</p>`;
+}
+const VERSION='1.0';
+A.setTheme=v=>{ui.theme=v;localStorage.setItem('ec_ui',JSON.stringify(ui));applyUi();render()};
+A.setFs=v=>{ui.fs=v;localStorage.setItem('ec_ui',JSON.stringify(ui));applyUi();render()};
+function vSettings(){
+  const opt=(fn,cur,a)=>`<div class="seg">${a.map(([v,t])=>`<button class="btn${cur===v?'':' alt'}" aria-pressed="${cur===v}" onclick="A.${fn}('${v}')">${t}</button>`).join('')}</div>`;
+  return`<h1>Setting</h1><p class="mute">Atur tampilan dan akunmu.</p>
+  <div class="f"><div class="st" style="margin:0"><h2>Tampilan</h2><p class="mute">Mode terang atau gelap</p>${opt('setTheme',ui.theme,[['light','Terang'],['dark','Gelap'],['auto','Ikuti perangkat']])}</div>
+  <div class="st"><h2>Ukuran huruf</h2><p class="mute">Berlaku di seluruh aplikasi</p>${opt('setFs',ui.fs,[['s','Kecil'],['m','Sedang'],['l','Besar'],['xl','Sangat besar']])}</div></div>
+  <div class="f"><div class="st" style="margin:0"><h2>Akun</h2><div class="kv"><span>Masuk sebagai</span><span>${esc(user.email||'-')}</span></div></div>
+  <button class="btn alt" onclick="A.out()">Keluar</button></div>
+  <div class="f"><div class="st" style="margin:0"><h2>Tentang aplikasi</h2>
+  <p class="mute">Essencare membantu kamu mencatat kesehatan dengan tenang: olahraga, diet, siklus haid, dan kebiasaan toilet, lengkap dengan analisis perkembangannya.</p>
+  <div class="kv"><span>Versi</span><span>${VERSION}</span></div>
+  <div class="kv"><span>Penyimpanan data</span><span>Akun Firebase milikmu</span></div></div>
+  <p class="mute" style="margin:0">Catatan di aplikasi ini bukan pengganti saran dokter.</p></div>`;
+}
+const MET={'Jalan kaki':3.5,'Lari':9.8,'Gym':5,'Yoga':2.5,'Bersepeda':7.5,'Renang':6,'Lainnya':4};
+A.est=e=>{const f=e.currentTarget,k=f.elements.k;
+  if(e.target.name==='k'){k.value===''?delete k.dataset.m:k.dataset.m=1;return}
+  if(k.dataset.m)return;
+  const m=+f.elements.m.value;k.value=m>0?Math.round(MET[f.elements.n.value]*(goal.kg||60)*m/60):''};
+function vWork(){
+  const w=ofType('workout'),wk=w.filter(l=>l.date>=addD(TODAY(),-6));
+  return`<div class="top"><h1>Olahraga</h1><button class="link" onclick="A.wgoal()">Ubah target</button></div><p class="mute">7 hari terakhir: ${wk.reduce((a,l)=>a+l.min,0)} menit dalam ${wk.length} sesi</p>
+  <div class="g2">${bar(sum('workout','min'),goal.wmin,'Durasi hari ini','menit')}${bar(sum('workout','kcal'),goal.wkcal,'Kalori terbakar hari ini','kkal')}</div>
+  <form class="f" onsubmit="return A.work(event)" oninput="A.est(event)">
+  <label>Jenis<select name="n">${opts(Object.keys(MET).map(x=>[x,x]))}</select></label>
+  <div class="two"><label>Durasi (menit)<input name="m" type="number" min="1" required></label><label>Kalori terbakar (kkal)<input name="k" type="number" min="0" placeholder="Terisi otomatis"></label></div>
+  <button class="btn">Simpan olahraga</button></form>
+  <h2>Riwayat</h2>${list(w,l=>li(l,esc(l.name),`${l.min} menit${l.kcal?', '+l.kcal+' kkal':''}, ${when(l)}`),'Belum ada catatan. Mulai dengan sesi pertamamu.')}`;
+}
+const FOODS=[['Nasi putih','1 piring',200],['Nasi goreng','1 piring',330],['Mie goreng','1 piring',400],['Ayam goreng','1 potong',260],['Ayam bakar','1 potong',200],['Ikan goreng','1 potong',180],['Telur rebus','1 butir',75],['Telur dadar','1 butir',95],['Tempe goreng','1 potong',80],['Tahu goreng','1 potong',40],['Sayur tumis','1 mangkuk',70],['Soto ayam','1 mangkuk',300],['Bakso','1 mangkuk',300],['Gado-gado','1 porsi',300],['Oatmeal','1 mangkuk',150],['Roti tawar','1 lembar',75],['Gorengan','1 buah',130],['Buah pisang','1 buah',90],['Buah apel','1 buah',80],['Yogurt','1 cup',100],['Susu','1 gelas',150],['Teh manis','1 gelas',100],['Kopi susu','1 gelas',120],['Permen','1 butir',20],['Buah stroberi','5 buah, 75 g',25],['Buah jambu air','2 buah, 100 g',30],['Buah belimbing','1 buah, 100 g',35],['Buah manggis','3 buah',40],['Buah jeruk bali','3 siung, 100 g',40],['Buah semangka','1 potong, 150 g',45],['Buah lengkeng','10 buah, 70 g',45],['Buah kiwi','1 buah',45],['Buah blueberry','1 genggam, 80 g',45],['Buah blewah','1 potong, 150 g',50],['Buah melon','1 potong, 150 g',50],['Buah nanas','1 potong, 100 g',50],['Buah anggur','10 butir, 70 g',50],['Buah markisa','2 buah',50],['Buah jeruk','1 buah',60],['Buah pepaya','1 potong, 150 g',60],['Buah rambutan','5 buah, 75 g',60],['Buah sirsak','1 potong, 100 g',65],['Buah jambu biji','1 buah, 100 g',70],['Buah kurma','3 butir',70],['Buah salak','3 buah, 100 g',80],['Buah delima','1/2 buah, 100 g',80],['Buah nangka','3 biji, 100 g',95],['Buah pir','1 buah, 180 g',100],['Buah mangga','1 buah, 200 g',120],['Buah durian','2 biji, 100 g',150],['Buah alpukat','1/2 buah, 100 g',160]];
+FOODS.sort((a,b)=>a[2]-b[2]);
+const flab=f=>`${f[0]} (${f[1]}), ${f[2]} kkal`;
+const flist=q=>FOODS.filter(f=>f[0].toLowerCase().includes(q)).map(f=>`<li><button type="button" data-v="${f[0]}" onclick="A.fpick(this.dataset.v)">${flab(f)}</button></li>`).join('')+'<li><button type="button" data-v="_" onclick="A.fpick(\'_\')">Lainnya (isi sendiri)</button></li>';
+function fsync(f,reset){const E=f.elements,k=E.k,o=E.n.value==='_';
+  f.querySelector('#mn').hidden=!o;E.x.required=o;
+  if(o){if(reset)k.value='';return}
+  const fo=FOODS.find(x=>x[0]===E.n.value);if(fo&&!k.dataset.m)k.value=Math.round(fo[2]*(+E.p.value||0))}
+A.fq='';
+A.fopen=el=>{A.fq='';el.select();const l=$('#fl');l.innerHTML=flist('');l.hidden=false};
+A.ffilter=el=>{A.fq=el.value.trim();el.form.elements.n.value='';const l=$('#fl');l.innerHTML=flist(A.fq.toLowerCase());l.hidden=false};
+A.fkey=e=>{if(e.key==='Enter'){e.preventDefault();const b=$('#fl button');b&&b.click()}else if(e.key==='Escape')$('#fl').hidden=true};
+A.fpick=v=>{const f=$('#fs').form,E=f.elements;E.n.value=v;delete E.k.dataset.m;
+  E.q.value=v==='_'?'Lainnya (isi sendiri)':flab(FOODS.find(x=>x[0]===v));
+  fsync(f,true);if(v==='_'&&A.fq)E.x.value=A.fq;$('#fl').hidden=true};
+document.addEventListener('click',e=>{const l=$('#fl');if(l&&!e.target.closest('.cb'))l.hidden=true});
+A.mest=e=>{const f=e.currentTarget,k=f.elements.k,t=e.target.name;
+  if(t==='k'){k.value===''?delete k.dataset.m:k.dataset.m=1;return}
+  if(t==='p')fsync(f)};
+function vDiet(){
+  const m=ofType('meal'),ws=ofType('water');
+  return`<div class="top"><h1>Diet</h1><button class="link" onclick="A.goal()">Ubah target</button></div>
+  <div class="g2">${bar(sum('meal','kcal'),goal.kcal,'Kalori','kkal')}${bar(sum('water','ml'),goal.water,'Air minum','ml','<button class="btn alt sip" onclick="A.sip()">+1 teguk</button>')}</div>
+  <form class="f fd" onsubmit="return A.meal(event)" oninput="A.mest(event)">
+  <div class="cb"><label>Makanan<input id="fs" name="q" type="text" autocomplete="off" placeholder="Ketik untuk mencari makanan" value="${flab(FOODS[0])}" onfocus="A.fopen(this)" oninput="A.ffilter(this)" onkeydown="A.fkey(event)"></label><ul class="fl" id="fl" hidden></ul></div>
+  <input type="hidden" name="n" value="${FOODS[0][0]}">
+  <label id="mn" hidden>Nama makanan<input name="x" placeholder="Nasi, ayam, sayur"></label>
+  <div class="two"><label>Jumlah porsi<input name="p" type="number" min="0.5" step="0.5" value="1" required></label><label>Kalori (kkal)<input name="k" type="number" min="0" value="${FOODS[0][2]}" required></label></div>
+  <button class="btn">Simpan makanan</button></form>
+  <h2>Riwayat makan</h2>${list(m,l=>li(l,esc(l.name),`${l.kcal} kkal, ${when(l)}`),'Belum ada makanan tercatat hari ini.')}
+  <h2>Riwayat minum</h2>${list(ws,l=>li(l,`${l.ml} ml`,when(l)),'Belum ada catatan minum.')}`;
+}
+function phs(c,Lx,Mx){
+  const L=Lx||c.avg,O=L-14;
+  const done=ofType('period').filter(p=>p.end).map(p=>dd(p.end,p.start)+1).filter(x=>x>0&&x<=10);
+  let M=done.length?Math.round(done.reduce((a,b)=>a+b,0)/done.length):5;
+  M=Mx?Math.min(O-1,Math.max(1,Mx)):Math.min(O-1,Math.min(8,Math.max(3,M)));
+  const s=[{n:'Menstruasi (haid)',ac:'c-cycle',a:1,b:M,t:'Dinding rahim luruh dan keluar sebagai darah haid. Hari pertama haid adalah hari ke-1 siklus.'}];
+  if(M+1<=O-1)s.push({n:'Fase folikuler',ac:'c-water',a:M+1,b:O-1,t:'Haid selesai, hormon estrogen naik dan folikel di ovarium matang untuk melepas sel telur.'});
+  s.push({n:'Ovulasi',ac:'c-work',a:O,b:O,t:'Sel telur dilepas dari ovarium dan hidup sekitar 12 sampai 24 jam. Perkiraan berdasarkan 14 hari sebelum haid berikutnya.'});
+  s.push({n:'Fase luteal',ac:'c-lut',a:O+1,b:L,t:'Hormon progesteron naik untuk menyiapkan rahim. Jika tidak terjadi pembuahan, hormon turun dan haid dimulai. Gejala PMS biasa muncul di akhir fase ini.'});
+  return{s,L,O,f:{n:'Masa subur',ac:'c-kcal',a:O-5,b:O+1,t:'Sperma dapat bertahan hingga sekitar 5 hari, sehingga peluang hamil ada pada 5 hari sebelum ovulasi sampai 1 hari sesudahnya. Peluang tertinggi 1 sampai 2 hari sebelum ovulasi.'}};
+}
+function dayCat(d){
+  const ps=ofType('period').sort((a,b)=>a.start<b.start?-1:1),c=cyc();
+  if(!c||d<ps[0].start)return null;
+  let idx=0;ps.forEach((p,j)=>{if(p.start<=d)idx=j});
+  const p=ps[idx];let st,L,M=p.end?dd(p.end,p.start)+1:0,pred=false;
+  if(idx<ps.length-1){st=p.start;L=dd(ps[idx+1].start,p.start)}
+  else{const n=Math.floor(dd(d,p.start)/c.avg);if(n>6)return null;st=addD(p.start,n*c.avg);L=c.avg;pred=n>0;if(pred)M=0}
+  const day=dd(d,st)+1,Lc=Math.min(45,Math.max(21,L));
+  if(day>Lc)return null;
+  const q=phs(c,Lc,M),x=q.s.find(y=>day>=y.a&&day<=y.b);
+  if(!x)return null;
+  return{k:x===q.s[0]?'h':x.ac==='c-water'?'f':x.ac==='c-work'?'o':'l',n:x.n,ac:x.ac,day,fert:day>=q.f.a&&day<=q.f.b,est:pred||d>TODAY()}
+}
+let cm=TODAY().slice(0,7),csel=TODAY();
+A.cmon=n=>{if(n===0){cm=TODAY().slice(0,7);csel=TODAY()}else{
+  const[y,m]=cm.split('-').map(Number),t=new Date(y,m-1+n,1),k=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+  const ps=ofType('period').map(l=>l.start.slice(0,7)).sort(),lim=new Date(),mx=new Date(lim.getFullYear(),lim.getMonth()+6,1);
+  if((ps.length&&k<ps[0])||t>mx)return toast(n<0?'Belum ada data sebelum bulan ini.':'Prediksi maksimal 6 bulan ke depan.');
+  cm=k}render()};
+A.csel=d=>{csel=d;render()};
+function cal(){
+  const[y,m]=cm.split('-').map(Number),first=new Date(y,m-1,1),off=(first.getDay()+6)%7,nd=new Date(y,m,0).getDate(),t=TODAY();
+  const cells=[];for(let i=0;i<off;i++)cells.push('<span></span>');
+  for(let n=1;n<=nd;n++){
+    const d=`${cm}-${String(n).padStart(2,'0')}`,ci=dayCat(d),cl=['cd'];
+    if(ci){const k=ci.k==='h'&&ci.est?'hp':ci.k;cl.push(k);if(ci.fert)cl.push('sf')}else cl.push('e');
+    if(d===t)cl.push('td');if(d===csel)cl.push('sl');
+    cells.push(`<button type="button" class="${cl.join(' ')}" ${ci?`style="--ac:var(--${ci.ac})"`:''} onclick="A.csel('${d}')" aria-label="${fd(d)}">${n}</button>`)}
+  const ci=dayCat(csel);
+  const dt=!ci?`${fd(csel)}: belum ada data fase untuk tanggal ini.`:`${fd(csel)}: ${ci.k==='h'&&ci.est?'Perkiraan haid':ci.n}${ci.fert?', masa subur':''}. Hari ke-${ci.day} siklus${ci.est&&!(ci.k==='h'&&ci.est)?' (perkiraan)':''}.`;
+  const lg=(ac,n,x='')=>`<span class="chip" style="--ac:var(--${ac})"><i class="${x}"></i>${n}</span>`;
+  return`<div class="cal"><div class="clh"><button class="rst" onclick="A.cmon(-1)" aria-label="Bulan sebelumnya">‹</button><b>${first.toLocaleDateString('id-ID',{month:'long',year:'numeric'})}</b><button class="rst" onclick="A.cmon(1)" aria-label="Bulan berikutnya">›</button></div>
+  <div class="cg">${['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(x=>`<span>${x}</span>`).join('')}${cells.join('')}</div>
+  <p class="cdt">${dt}</p>
+  <div class="cgd">${lg('c-cycle','Haid')}${lg('c-cycle','Prediksi haid','d')}${lg('c-water','Folikuler')}${lg('c-work','Ovulasi')}${lg('c-lut','Luteal')}${lg('c-kcal','Masa subur','b')}</div>
+  <div class="row"><button class="btn alt" onclick="A.cmon(0)">Kembali ke hari ini</button></div></div>`
+}
+function phNow(c){
+  const p=phs(c);if(c.day>p.L)return'Melewati perkiraan akhir siklus';
+  const x=p.s.find(y=>c.day>=y.a&&c.day<=y.b),f=c.day>=p.f.a&&c.day<=p.f.b;
+  return(x?x.n:'')+(f?', masa subur':'')}
+function cycPhases(c){
+  const p=phs(c),L=p.L,dt=n=>addD(c.last.start,n-1),rg=(a,b)=>a===b?fd(dt(a)):`${fd(dt(a))} - ${fd(dt(b))}`,dy=(a,b)=>b-a+1;
+  const cur=p.s.find(x=>c.day>=x.a&&c.day<=x.b),inF=c.day>=p.f.a&&c.day<=p.f.b;
+  const st=c.day>L?'Hari ini sudah melewati perkiraan akhir siklus. Fase di bawah mengacu pada siklus terakhir yang tercatat.':`Hari ke-${c.day} dari ${L}: ${cur?cur.n:'-'}.${inF?' Hari ini termasuk masa subur.':''}`;
+  const mk=c.day>=1&&c.day<=L?`<span class="pm" style="left:${(c.day-.5)/L*100}%" title="Hari ini"></span>`:'';
+  const item=(x,on)=>`<li class="${on?'cur':''}" style="--ac:var(--${x.ac})"><span class="dot"></span><div><b>${x.n}${on?'<em>Sekarang</em>':''}</b><span class="dtl">${rg(x.a,x.b)} (${dy(x.a,x.b)} hari)</span><p>${x.t}</p></div></li>`;
+  return`<h2>Fase siklus</h2><p class="mute">${st}</p>
+  <div class="pw"><div class="pb">${p.s.map(x=>`<i style="flex:${dy(x.a,x.b)};--ac:var(--${x.ac})" title="${x.n}"></i>`).join('')}</div>
+  <div class="pf" title="Masa subur"><i style="left:${(p.f.a-1)/L*100}%;width:${dy(p.f.a,p.f.b)/L*100}%"></i></div>${mk}</div>
+  <div class="pa"><span>Hari 1</span><span>Hari ${L}</span></div>
+  <ul class="pl">${p.s.map(x=>item(x,x===cur)).join('')}${item(p.f,inF)}</ul>
+  <p class="mute" style="margin-top:10px">Ini perkiraan dari rata-rata siklusmu dan masa luteal 14 hari. Waktu ovulasi tiap orang berbeda, jadi jangan dipakai sebagai alat kontrasepsi atau pengganti saran dokter.</p>`;
+}
+function vCycle(){
+  const c=cyc(),p=ofType('period').sort((a,b)=>a.start<b.start?1:-1);
+  return`<h1>Siklus</h1><p class="note" style="margin-top:14px">${cycText(c)}${c?`<br><span class="mute">Rata-rata siklus ${c.avg} hari${c.n<2?' (perkiraan awal)':''}.</span>`:''}</p>
+  ${c&&c.open?`<div class="row"><button class="btn" onclick="A.end('${c.last.id}')">Tandai haid selesai hari ini</button></div>`:''}
+  ${c?cal()+cycPhases(c):''}
+  <form class="f" onsubmit="return A.period(event)"><div class="two"><label>Hari pertama haid<input name="d" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off" oninput="A.dmask(this)" value="${iso2id(TODAY())}" required></label><label>Hari terakhir haid (opsional)<input name="e" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off" oninput="A.dmask(this)"></label></div><p class="mute" style="margin:0">Ingin mengisi riwayat? Pilih tanggal beberapa bulan ke belakang, isi tanggal mulai dan selesai, lalu simpan. Ulangi untuk tiap bulan agar perkiraan siklus lebih akurat.</p><button class="btn">Simpan catatan haid</button></form>
+  <h2>Riwayat</h2>${list(p,l=>li(l,`Mulai ${fd(l.start)}`,l.end?`Selesai ${fd(l.end)}, ${dd(l.end,l.start)+1} hari`:'Belum ditandai selesai'),'Belum ada riwayat siklus.')}`;
+}
+const BR=['Keras & terpisah','Bergumpal','Retak di permukaan','Halus & lembut','Potongan lembek','Berampas & lembek','Cair'];
+function vWc(){
+  const a=ofType('pee','pup'),t=a.filter(l=>l.date===TODAY());
+  return`<h1>Pup & Pee</h1><p class="mute">Hari ini: ${t.filter(l=>l.type==='pee').length} kali pee, ${t.filter(l=>l.type==='pup').length} kali pup</p>
+  <div class="g2"><form class="f" onsubmit="return A.pee(event)"><label>Warna pee<select name="c">${opts(['Bening','Kuning muda','Kuning','Kuning pekat','Lainnya'].map(x=>[x,x]))}</select></label><button class="btn">Catat pee</button></form>
+  <form class="f" onsubmit="return A.pup(event)"><label>Tekstur pup<select name="b">${opts(BR.map((x,i)=>[i+1,`Tipe ${i+1}: ${x}`]))}<option value="0">Tidak dicatat</option></select></label><button class="btn">Catat pup</button></form></div>
+  <h2>Riwayat</h2>${list(a,l=>l.type==='pee'?li(l,'Pee',`${esc(l.color||'Warna tidak dicatat')}, ${when(l)}`):li(l,'Pup',`${l.bristol?'Tipe '+l.bristol+': '+BR[l.bristol-1]:'Tekstur tidak dicatat'}, ${when(l)}`),'Belum ada catatan.')}`;
+}
+
+const TABS=[['home','Beranda','<path d="M3 11l9-8 9 8v10H3z"/><path d="M9 21v-7h6v7"/>'],
+['health','Kesehatan','<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>'],
+['analysis','Analisis','<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>'],
+['settings','Setting','<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>']];
+const SUB=['work','diet','cycle','wc'];
+const V={home:vHome,health:vHealth,analysis:vAnalysis,settings:vSettings,work:vWork,diet:vDiet,cycle:vCycle,wc:vWc};
+
+function render(){
+  if(!user)return;
+  $('#app').innerHTML=`<main>${SUB.includes(tab)?`<button class="link" style="padding:0 0 12px" onclick="A.go('health')">‹ Kesehatan</button>`:''}${V[tab]()}</main><nav><div class="brand"><img src="${LOGO}" alt="">Essencare</div><div>${TABS.map(([k,n,p])=>`<button class="${k===tab||(k==='health'&&SUB.includes(tab))?'on':''}" onclick="A.go('${k}')" ${k===tab?'aria-current="page"':''}><svg viewBox="0 0 24 24">${p}</svg>${n}</button>`).join('')}</div></nav>`;
+}
+
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'));
+</script>
+</body>
+</html>

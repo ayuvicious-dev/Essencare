@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1565C0">
 <title>Essencare</title>
 <link rel="manifest" href="manifest.json">
@@ -12,6 +12,7 @@
 :root{--fs:1;--c-work:#EA580C;--c-kcal:#15803D;--c-water:#1565C0;--c-pee:#CA8A04;--c-pup:#92400E;--c-cycle:#DB2777;--c-lut:#7C3AED;--card:#fff;--ink:#0B2545;--blue:#1565C0;--blue2:#0D47A1;--sky:#E8F1FC;--mist:#F5F8FD;--line:#D9E4F4;--mute:#5B6F8C;--bad:#C0392B}
 :root[data-theme=dark]{color-scheme:dark;--ink:#E6EEF9;--blue:#2F7FD8;--blue2:#A9D1FA;--sky:#1B2C4A;--mist:#0E1726;--card:#16223A;--line:#26385A;--mute:#9AACC8;--bad:#FF7A6B;--c-work:#FB923C;--c-kcal:#4ADE80;--c-water:#60A5FA;--c-pee:#FACC15;--c-pup:#D6A15E;--c-cycle:#F472B6;--c-lut:#A78BFA}
 *{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font:calc(16px*var(--fs))/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--mist);-webkit-tap-highlight-color:transparent}
 h1,h2,.num{font-family:"Iowan Old Style",Georgia,"Times New Roman",serif;font-weight:600}
 #app{max-width:520px;margin:auto;min-height:100vh}
@@ -35,7 +36,7 @@ h2{font-size:calc(19px*var(--fs));margin:28px 0 10px}
 .bar{height:10px;background:var(--sky);border-radius:9px;overflow:hidden;margin:10px 0 4px}
 .bar i{display:block;height:100%;background:var(--blue);border-radius:9px}
 label{display:grid;gap:4px;font-size:calc(13px*var(--fs));font-weight:500}
-input,select{font:inherit;color:var(--ink);padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--mist);width:100%}
+input,select,textarea{font:inherit;font-size:max(16px,calc(16px*var(--fs)));color:var(--ink);padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--mist);width:100%}
 input:focus,select:focus,button:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .btn{font:inherit;font-weight:600;background:var(--blue);color:#fff;border:0;border-radius:12px;padding:12px 16px;cursor:pointer}

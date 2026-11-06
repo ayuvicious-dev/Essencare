@@ -2082,11 +2082,11 @@ $('#coYear').addEventListener('change', e => { coYearSel = e.target.value; updat
 $('#btnCoDl').onclick = async () => {
   const Y = +$('#coYear').value; if (!Y) return toast('Impor Laba Rugi / Buku Besar perusahaan terlebih dulu.');
   try {
-    const c = await renderConsol(Y); if (!c) return toast('Belum ada data untuk dibuat laporan.');
+    const c = await renderConsol(Y, 4); if (!c) return toast('Belum ada data untuk dibuat laporan.');
     c.toBlob(b => {
       const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'LaporanKonsolidasi-' + Y + '.png';
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      toast('Laporan Konsolidasi diunduh (PNG)');
+      toast('Laporan Konsolidasi diunduh (PNG HD)');
     }, 'image/png');
   } catch (err) { console.error(err); toast('Gagal membuat gambar: ' + err.message, 4000); }
 };
@@ -2542,21 +2542,24 @@ function niceScale(lo, hi, n = 5) {
   const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
   return { lo: Math.floor(lo / step + 1e-9) * step, hi: Math.ceil(hi / step - 1e-9) * step, step };
 }
-async function renderConsol(Y) {
+async function renderConsol(Y, SC) {
   const D = buildConsol(Y); if (!D) return null;
   const logo = await rpLogoP, P = D.P, lab = D.label;
-  const W = 1000, S = 2, PX = 40, CW = 920, FF = 'Arial, Helvetica, sans-serif', GOLD = '#B8923C', INK = '#111', RED = '#B3261E', GRID = '#ECE7DC', TOT = '#E9D9A8';
+  const W = 1000, S = SC || 2, PX = 40, CW = 920, FF = 'Arial, Helvetica, sans-serif', GOLD = '#B8923C', INK = '#111', RED = '#B3261E', GRID = '#ECE7DC', TOT = '#E9D9A8';
   const all = D.all, n = all.length;
   const tblRows = D.anak.length + (D.tAnak ? 1 : 0) + D.cucu.length + (D.tCucu ? 1 : 0);
-  const hS1 = 270, hS2 = 26 + n * 28 + 56, hS3 = 250;
-  const H = 182 + 72 + 34 + hS1 + 28 + hS2 + 28 + hS3 + 28 + (26 + 30 + tblRows * 28) + 36;
+  const hS1 = 270, hS2 = 250, hS3 = 250;
+  const H = 182 + 72 + 34 + hS1 + 28 + 2 * (hS2 + 28) + hS3 + 28 + (26 + 30 + tblRows * 28) + 36;
   const c = document.createElement('canvas'); c.width = W * S; c.height = Math.ceil(H * S);
-  const ctx = c.getContext('2d'); ctx.scale(S, S);
+  const ctx = c.getContext('2d'); ctx.scale(S, S); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   const J = v => { const r = Math.round(v); return (r === 0 ? 0 : r).toLocaleString('id-ID'); };
   // kartu ringkasan (nilai dalam jutaan): omset dibulatkan ke Miliar, net 1 desimal; di bawah 1 Miliar tampil Juta
   const kJt = v => 'Rp' + J(v) + ' Juta';
   const kOm = v => { v = Number(v) || 0; return Math.abs(v) >= 1000 ? (v < 0 ? '-' : '') + 'Rp' + Math.round(Math.abs(v) / 1000).toLocaleString('id-ID') + 'M' : kJt(v); };
   const kNt = v => { v = Number(v) || 0; return Math.abs(v) >= 1000 ? (v < 0 ? '-' : '') + 'Rp' + (Math.abs(v) / 1000).toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M' : kJt(v); };
+  // label grafik (nilai dalam jutaan): >= 1 Miliar -> Rp113,9M ; di bawahnya -> Rp808jt
+  const gFmt = (v, minD) => { v = Number(v) || 0; const a = Math.abs(v), sg = v < 0 ? '-' : ''; return a >= 1000 ? sg + 'Rp' + (a / 1000).toLocaleString('id-ID', { minimumFractionDigits: minD, maximumFractionDigits: 1 }) + 'M' : sg + 'Rp' + Math.round(a).toLocaleString('id-ID') + 'jt'; };
+  const G = v => gFmt(v, 1), GA = v => (Math.round(v) === 0 ? 'Rp0' : gFmt(v, 0));
   const np = (nn, oo) => (oo ? nn / oo * 100 : null);
   const fp = v => v == null ? '-' : v.toFixed(2).replace('.', ',') + '%';
   const T = (t, x, y, font, col, al) => { ctx.font = font; ctx.fillStyle = col; ctx.textAlign = al || 'left'; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); };
@@ -2587,17 +2590,17 @@ async function renderConsol(Y) {
   const yearChart = (x, y, w, h, title, ag) => {
     T(title, x, y + 8, 'bold 14px ' + FF, INK);
     const bt = y + 26, bh = h - 26; R(x, bt, w, bh, '#fff');
-    const pl = 46, pr = 12, pt = 58, pb = 38, px = x + pl, py = bt + pt, pw = w - pl - pr, ph = bh - pt - pb;
+    const pl = 56, pr = 12, pt = 58, pb = 38, px = x + pl, py = bt + pt, pw = w - pl - pr, ph = bh - pt - pb;
     const sc = niceScale(Math.min(0, ...ag.n, ...ag.o), Math.max(0, ...ag.o, ...ag.n));
     const sy = v => py + ph - (v - sc.lo) / (sc.hi - sc.lo) * ph;
-    for (let v = sc.lo; v <= sc.hi + 1e-9; v += sc.step) { R(px, sy(v), pw, 1, v === 0 ? '#bbb' : GRID); T(String(Math.round(v)), px - 6, sy(v), '10px ' + FF, '#777', 'right'); }
+    for (let v = sc.lo; v <= sc.hi + 1e-9; v += sc.step) { R(px, sy(v), pw, 1, v === 0 ? '#bbb' : GRID); T(GA(v), px - 6, sy(v), '10px ' + FF, '#777', 'right'); }
     const gw = pw / D.years.length, bw = Math.min(gw * 0.32, 46);
     D.years.forEach((yr, i) => {
       const cx = px + gw * (i + 0.5);
       [[cx - bw - 1, ag.o[i], INK, false], [cx + 1, ag.n[i], GOLD, true]].forEach(([bx, v, col, gold]) => {
         const y0 = sy(0), y1 = sy(v);
         R(bx, Math.min(y0, y1), bw, Math.max(Math.abs(y1 - y0), 0), col);
-        if (Math.round(v) !== 0) T(J(v), bx + bw / 2, v >= 0 ? y1 - 7 : y1 + 7, (gold ? 'bold ' : '') + '9px ' + FF, gold ? GOLD : '#222', 'center');
+        if (Math.round(v) !== 0) T(G(v), bx + bw / 2, v >= 0 ? y1 - 7 : y1 + 7, (gold ? 'bold ' : '') + '9px ' + FF, gold ? GOLD : '#222', 'center');
       });
       const nm = np(ag.n[i], ag.o[i]);
       if (nm != null) { RR(cx - 38, bt + 8, 76, 17, 3, '#FBE4E2'); T('NPM ' + fp(nm), cx, bt + 16.5, 'bold 10px ' + FF, RED, 'center'); }
@@ -2611,33 +2614,32 @@ async function renderConsol(Y) {
   yearChart(PX, y, 440, hS1, 'Anak Perusahaan: Omset, Net & NPM', D.yAnak);
   yearChart(PX + 480, y, 440, hS1, 'Cucu Perusahaan: Omset, Net & NPM', D.yCucu);
   y += hS1 + 28;
-  // ---- grafik batang horizontal per perusahaan ----
-  const hFrame = (x, w, title, vals, lo0) => {
-    T(title, x, y + 8, 'bold 14px ' + FF, INK);
-    const bt = y + 26, bh = hS2 - 26; R(x, bt, w, bh, '#fff');
-    const pl = 66, pr = 40, pt = 28, pb = 28, px = x + pl, py = bt + pt, pw = w - pl - pr, ph = bh - pt - pb;
-    const sc = niceScale(Math.min(lo0, ...vals), Math.max(0, ...vals));
-    const sx = v => px + (v - sc.lo) / (sc.hi - sc.lo) * pw, rowH = ph / n;
-    for (let v = sc.lo; v <= sc.hi + 1e-9; v += sc.step) { R(sx(v), py, 1, ph, GRID); T(String(Math.round(v)), sx(v), py + ph + 14, '10px ' + FF, '#777', 'center'); }
-    all.forEach((co, i) => T(fit(co.name, pl - 10, '10px ' + FF), px - 6, py + rowH * (i + 0.5), '10px ' + FF, '#666', 'right'));
-    return { px, py, pw, ph, sx, rowH, sc };
+  // ---- grafik batang vertikal per perusahaan (Omset & Net Profit) ----
+  const vFrame = (title, vals) => {
+    T(title, PX, y + 8, 'bold 14px ' + FF, INK);
+    const bt = y + 26, bh = hS2 - 26; R(PX, bt, CW, bh, '#fff');
+    const pl = 56, pr = 16, pt = 30, pb = 30, px = PX + pl, py = bt + pt, pw = CW - pl - pr, ph = bh - pt - pb;
+    const sc = niceScale(Math.min(0, ...vals), Math.max(0, ...vals));
+    const sy = v => py + ph - (v - sc.lo) / (sc.hi - sc.lo) * ph, gw = pw / n;
+    for (let v = sc.lo; v <= sc.hi + 1e-9; v += sc.step) { R(px, sy(v), pw, 1, v === 0 ? INK : GRID); T(GA(v), px - 6, sy(v), '10px ' + FF, '#777', 'right'); }
+    all.forEach((co, i) => T(fit(co.name, gw - 6, '10px ' + FF), px + gw * (i + 0.5), py + ph + 14, '10px ' + FF, '#666', 'center'));
+    return { px, py, pw, ph, sy, gw, bt, bh };
   };
-  const lx = PX, rx = PX + 480;
-  const o1 = hFrame(lx, 440, 'Omset per Perusahaan: ' + P + ' vs ' + Y + (lab ? ' ' + lab : ''), [...all.map(x => x.po || 0), ...all.map(x => x.o || 0)], 0);
+  const o1 = vFrame('Omset per Perusahaan: ' + P + ' vs ' + Y + (lab ? ' ' + lab : ''), [...all.map(x => x.po || 0), ...all.map(x => x.o || 0)]);
   all.forEach((co, i) => {
-    const cy = o1.py + o1.rowH * (i + 0.5), bh2 = Math.min(o1.rowH * 0.34, 11);
-    if (co.po != null) R(o1.px, cy - bh2 - 1, Math.max(o1.sx(co.po) - o1.px, 0), bh2, '#E8D5A8');
-    if (co.o != null) { R(o1.px, cy + 1, Math.max(o1.sx(co.o) - o1.px, 0), bh2, INK); T(J(co.o), o1.sx(co.o) + 4, cy + 1 + bh2 / 2, '9px ' + FF, '#222'); }
+    const cx = o1.px + o1.gw * (i + 0.5), bw = Math.min(o1.gw * 0.28, 34), y0 = o1.sy(0);
+    if (co.po != null) { const y1 = o1.sy(co.po); R(cx - bw - 1, Math.min(y0, y1), bw, Math.abs(y1 - y0), '#E8D5A8'); }
+    if (co.o != null) { const y1 = o1.sy(co.o); R(cx + 1, Math.min(y0, y1), bw, Math.abs(y1 - y0), INK); T(G(co.o), cx + 1 + bw / 2, co.o >= 0 ? y1 - 9 : y1 + 9, 'bold 9px ' + FF, '#222', 'center'); }
   });
-  R(lx + 8, y + 26 + 9, 9, 9, '#E8D5A8'); T(String(P), lx + 22, y + 26 + 13.5, '10px ' + FF, '#444');
-  R(lx + 64, y + 26 + 9, 9, 9, INK); T(String(Y), lx + 78, y + 26 + 13.5, '10px ' + FF, '#444');
-  const n1 = hFrame(rx, 440, 'Net Profit ' + Y + (lab ? ' ' + lab : '') + ' per Perusahaan', all.map(x => x.n || 0), 0);
-  R(n1.sx(0), n1.py, 1.2, n1.ph, INK);
+  R(PX + 8, o1.bt + 9, 9, 9, '#E8D5A8'); T(String(P), PX + 22, o1.bt + 13.5, '10px ' + FF, '#444');
+  R(PX + 64, o1.bt + 9, 9, 9, INK); T(String(Y), PX + 78, o1.bt + 13.5, '10px ' + FF, '#444');
+  y += hS2 + 28;
+  const n1 = vFrame('Net Profit ' + Y + (lab ? ' ' + lab : '') + ' per Perusahaan', all.map(x => x.n || 0));
   all.forEach((co, i) => {
     if (co.n == null) return;
-    const cy = n1.py + n1.rowH * (i + 0.5), bh2 = Math.min(n1.rowH * 0.56, 18), x0 = n1.sx(0), x1 = n1.sx(co.n);
-    R(Math.min(x0, x1), cy - bh2 / 2, Math.abs(x1 - x0), bh2, co.n < 0 ? RED : GOLD);
-    if (co.n >= 0) T(J(co.n), x1 + 5, cy, 'bold 10px ' + FF, '#222'); else T(J(co.n), x1 - 5, cy, 'bold 10px ' + FF, '#222', 'right');
+    const cx = n1.px + n1.gw * (i + 0.5), bw = Math.min(n1.gw * 0.5, 72), y0 = n1.sy(0), y1 = n1.sy(co.n);
+    R(cx - bw / 2, Math.min(y0, y1), bw, Math.abs(y1 - y0), co.n < 0 ? RED : GOLD);
+    T(G(co.n), cx, co.n >= 0 ? y1 - 9 : y1 + 9, 'bold 10px ' + FF, '#222', 'center');
   });
   y += hS2 + 28;
   // ---- NPM per perusahaan ----

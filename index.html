@@ -133,6 +133,8 @@ label[hidden]{display:none}
 @media(max-width:600px){.sm{padding:16px}.rl{column-gap:18px}.rl li{font-size:calc(13px*var(--fs));gap:2px 6px;flex-wrap:wrap}}
 @media(max-width:600px){.dg{grid-template-columns:1fr}}
 .tgt{font-size:calc(12px*var(--fs));color:var(--mute);opacity:.7;white-space:nowrap;align-self:flex-end}
+.ifq{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding-top:6px}.ifq .qa{margin-top:0}.ifq input{font:inherit;font-size:calc(14px*var(--fs));color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 10px;min-width:0;width:100%;box-sizing:border-box}.ifq input:focus{outline:0;border-color:var(--ac)}.ifq label{display:flex;align-items:center;gap:8px;font-size:calc(12px*var(--fs));color:var(--mute)}.ifq label input{flex:1}.ifm{font-size:calc(12px*var(--fs));color:var(--mute);line-height:1.45}.ifm b{color:var(--ink);font-weight:600}
+.lp{font-size:calc(12px*var(--fs));color:var(--mute);line-height:1.3;white-space:nowrap}.lp b{font-weight:500;color:var(--mute)}
 .dc .qf{display:flex;gap:8px;margin-top:auto;padding-top:6px}.dc .qf input{flex:1;min-width:0;width:100%;font:inherit;font-size:calc(14px*var(--fs));color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 10px}.dc .qf input:focus{outline:0;border-color:var(--ac)}.dc .qf .qa{margin-top:0;white-space:nowrap}
 .dc .qr{display:flex;gap:8px;margin-top:auto;padding-top:6px}.dc .qr .qa{flex:1;margin-top:0;padding:10px 6px}
 .dc p{font-size:calc(12px*var(--fs));color:var(--mute);line-height:1.4}
@@ -342,6 +344,11 @@ applyUi();
 let user=null,logs=[],tab='home',unsub=null,signup=false,authErr='';
 const A=window.A={};
 const ofType=(...t)=>logs.filter(l=>t.includes(l.type));
+const fmGap=ms=>{const m=Math.max(0,Math.floor(ms/60000)),d=Math.floor(m/1440),h=Math.floor(m%1440/60),n=m%60;
+  return d>0?d+' Hari '+h+' Jam':h>0?h+' Jam '+n+' Menit':n+' Menit'};
+const lastPupHtml=()=>{const a=ofType('pup').map(l=>+l.ts||0).filter(Boolean),ts=a.length?Math.max(...a):0;
+  return`<span class="lp" data-ts="${ts}"><b>${ts?fmGap(Date.now()-ts):'Belum ada data'}</b></span>`};
+setInterval(()=>{document.querySelectorAll('.lp[data-ts]').forEach(e=>{const t=+e.dataset.ts;if(t){const b=e.querySelector('b');if(b)b.textContent=fmGap(Date.now()-t)}})},30000);
 const sum=(t,k,date=TODAY())=>ofType(t).filter(l=>l.date===date).reduce((a,l)=>a+(+l[k]||0),0);
 
 function ask(msg,fields,ok='OK',fn){return new Promise(res=>{
@@ -410,6 +417,45 @@ function ifClock(p){
   const segs=b>a?[[a,b]]:[[0,b],[a,1440]],ed=b>a?[a,b]:[b,a];
   const tk=[[0,'00','kf'],[360,'06',''],[720,'12',''],[1080,'18',''],[1440,'24','ke']];
   return`<div class="ck" role="img" aria-label="Jendela makan ${p.ws} sampai ${p.we}, sekarang ${hh(now)}"><div class="kt">${ed.map(m=>`<span style="left:${Math.min(94,Math.max(6,m/14.4)).toFixed(2)}%">${hh(m)}</span>`).join('')}</div><div class="kb">${segs.map(x=>`<i style="left:${pc(x[0])}%;width:${pc(x[1]-x[0])}%"></i>`).join('')}<span class="kn" style="left:${pc(now)}%"></span></div><div class="kx">${tk.map(t=>`<span class="${t[2]}" style="left:${pc(t[0])}%">${t[1]}</span>`).join('')}</div></div>`}
+const hhm=m=>{m=(Math.round(m)%1440+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+const ifMin=(d,k)=>{const a=ofType('ifmeal').filter(l=>l.date===d&&l.kind===k).sort((a,b)=>(b.at||0)-(a.at||0))[0];return a?a.min:null};
+function ifRec(){
+  const t=TODAY(),p=planDay(t);if(!p)return null;
+  const q=planDay(addD(t,1))||p;
+  let wl=tmin(q.we)-tmin(q.ws);if(wl<=0)wl+=1440;
+  let pw=tmin(p.we)-tmin(p.ws);if(pw<=0)pw+=1440;
+  const n=new Date();
+  return{p,q,wl,pw,fast:1440-wl,latest:tmin(q.ws)+wl,first:ifMin(t,'first'),last:ifMin(t,'last'),now:n.getHours()*60+n.getMinutes()}}
+function ifMsg(r){
+  const a=`Pertama <b>${r.first==null?'-':hhm(r.first)}</b> · Terakhir <b>${r.last==null?'-':hhm(r.last)}</b>`;
+  let s;
+  if(r.last!=null){
+    const sl=r.latest-r.last;
+    s=sl>=0?`Besok bisa mulai tepat <b>${r.q.ws}</b>.`:`Lewat ${dur(-sl)} dari batas. Besok mulai paling cepat <b>${hhm(r.last+r.fast)}</b> agar puasa penuh.`}
+  else if(r.now<r.latest){
+    s=`Berhenti makan maks. <b>${hhm(r.latest)}</b> (${dur(r.latest-r.now)} lagi) agar besok tepat ${r.q.ws}.`;
+    if(r.first!=null&&r.first>tmin(r.p.ws))s+=' Jendela hari ini lebih pendek, tidak apa-apa.'}
+  else s=`Batas ${hhm(r.latest)} sudah lewat. Berhenti makan agar besok tepat ${r.q.ws}.`;
+  return`<span class="ifm">${a}<br>${s}</span>`}
+function ifQuick(extra){const n=new Date(),v=hhm(n.getHours()*60+n.getMinutes());
+  return`<div class="ifq"><label>Jam makan<input id="ift" type="time" value="${v}" aria-label="Jam makan"></label><div class="qr"><button type="button" class="qa" onclick="A.ifm('first')">Makan pertama</button><button type="button" class="qa" onclick="A.ifm('last')">Makan terakhir</button></div>${extra||''}</div>`}
+A.ifm=kind=>{
+  const v=($('#ift')||{}).value;if(!v)return toast('Isi jam makan dulu.');
+  const t=TODAY(),m=tmin(v),f=ifMin(t,'first'),l=ifMin(t,'last');
+  if(kind==='last'&&f!=null&&m<f)return toast('Makan terakhir harus setelah makan pertama.');
+  if(kind==='first'&&l!=null&&m>l)return toast('Makan pertama harus sebelum makan terakhir.');
+  const old=ofType('ifmeal').filter(x=>x.date===t&&x.kind===kind);
+  run(async()=>{await Promise.all(old.map(x=>deleteDoc(doc(db,'users',user.uid,'logs',x.id))));
+    await addDoc(col(),{type:'ifmeal',date:t,ts:new Date(t+'T'+v+':00').getTime(),at:Date.now(),kind,min:m,time:v});
+    toast(kind==='first'?'Makan pertama tercatat':'Makan terakhir tercatat')})};
+function ifLog(){const r=ifRec();if(!r)return'';
+  const t=TODAY(),rows=Array.from({length:7},(_,i)=>addD(t,-i)).map(d=>{
+    const f=ifMin(d,'first'),l=ifMin(d,'last'),pv=ifMin(addD(d,-1),'last');if(f==null&&l==null)return'';
+    const bits=[`Pertama ${f==null?'-':hhm(f)}, terakhir ${l==null?'-':hhm(l)}`];
+    if(f!=null&&l!=null&&l>=f)bits.push('jendela makan '+dur(l-f));
+    if(f!=null&&pv!=null)bits.push('puasa semalam '+dur(f+1440-pv));
+    return`<li><div><b>${d===t?'Hari ini':fd(d)}</b><span>${bits.join(', ')}</span></div></li>`}).join('');
+  return`<section class="pc" style="margin-top:16px;--ac:var(--c-if)"><h3>Catat jam makan</h3>${ifQuick()}<p class="mute" style="margin:12px 0 0">${ifMsg(r)}</p><h3 style="margin-top:16px">7 hari terakhir</h3>${rows?`<ul class="list">${rows}</ul>`:'<p class="mute">Belum ada catatan.</p>'}</section>`}
 function ifInfo(){
   const p=planDay(TODAY()),g=[];
   PLAN.forEach(w=>{const x=g[g.length-1];if(x&&x.r===w[1]&&x.ws===w[2]&&x.we===w[3])x.to=addD(w[0],6);else g.push({r:w[1],ws:w[2],we:w[3],from:w[0],to:addD(w[0],6)})});
@@ -442,7 +488,8 @@ const SIP=30;
 A.qkcal=e=>{e.preventDefault();const k=Math.round(+fv(e).k);if(!k||k<1){toast('Isi jumlah kalori.');return false}add('meal',{name:'Kalori manual',kcal:k});toast(`+${k} kkal tercatat`);return false};
 A.qburn=e=>{e.preventDefault();const k=Math.round(+fv(e).k);if(!k||k<1){toast('Isi jumlah kalori terbakar.');return false}add('workout',{name:'Kalori terbakar manual',min:0,kcal:k});toast(`+${k} kkal terbakar tercatat`);return false};
 A.qwater=e=>{e.preventDefault();const ml=Math.round(+fv(e).ml);if(!ml||ml<1){toast('Isi jumlah air minum.');return false}add('water',{ml});toast(`+${ml} ml tercatat`);return false};
-A.weight=e=>{e.preventDefault();const kg=Math.round(+fv(e).w*100)/100;
+A.dec=el=>{let v=el.value.replace(/\./g,',').replace(/[^0-9,]/g,'');const i=v.indexOf(',');if(i>=0)v=v.slice(0,i+1)+v.slice(i+1).replace(/,/g,'').slice(0,2);if(v!==el.value)el.value=v};
+A.weight=e=>{e.preventDefault();const kg=Math.round(parseFloat(String(fv(e).w||'').replace(',','.'))*100)/100;
   if(!(kg>=20&&kg<=400)){toast('Isi berat badan antara 20 dan 400 kg.');return false}
   const ex=ofType('weight').find(l=>l.date===TODAY());
   if(ex)run(()=>updateDoc(doc(db,'users',user.uid,'logs',ex.id),{kg,ts:Date.now()}));else add('weight',{kg});
@@ -569,10 +616,10 @@ function vHome(){
   const cb=!c?'-':c.open?'Hari '+c.day:(c.left>=0?c.left:-c.left),cu=!c?'':c.open?' haid berjalan':c.left>=0?' hari lagi':' hari terlambat';
   return`<section class="sm"><div class="sh2"><h3>Progres target hari ini</h3><span class="num">${score}%</span></div><div class="bar"><i style="width:${score}%"></i></div><ul class="rl">${row('Berat (kg)',wl?fk(wl.kg):'-')}${row('Air (ml)',ml+' / '+goal.water)}${row('Pee',cn('pee'))}${row('Pup',cn('pup'))}${row('Olahraga (kkal)',wkc+' / '+TB())}${row('Kalori (kkal)',kc+' / '+TK())}${pwd?row('Puasa IF',pwd.ratio):''}${row('Siklus',!c?'-':c.open?'Hari ke-'+c.day:(c.left>=0?c.left:-c.left)+' hari')}</ul></section>
   <div class="dg">
-  ${kpi('c-weight','Berat badan',wp,wl?fk(wl.kg):'-',wl?' kg'+(wl.date===t?'':' ('+fd(wl.date).slice(0,5)+')'):'',null,wp,`<form class="qf" onsubmit="return A.weight(event)"><input name="w" type="number" inputmode="decimal" min="20" max="400" step="0.01" placeholder="00,00 kg" aria-label="Berat badan (kg)" required><button class="qa">+ Catat</button></form>`,mc(days.map(d=>{const w=ofType('weight').filter(l=>l.date===d).sort((a,b)=>b.ts-a.ts)[0];return w?w.kg:null}),'kg',1),pwd&&planOn()?`<span class="tgt">target ${f2(pwd.tw)}</span>`:'')}
+  ${kpi('c-weight','Berat badan',wp,wl?fk(wl.kg):'-',wl?' kg'+(wl.date===t?'':' ('+fd(wl.date).slice(0,5)+')'):'',null,wp,`<form class="qf" onsubmit="return A.weight(event)"><input name="w" type="text" inputmode="decimal" autocomplete="off" maxlength="6" oninput="A.dec(this)" placeholder="00,00 kg" aria-label="Berat badan (kg)" required><button class="qa">+ Catat</button></form>`,mc(days.map(d=>{const w=ofType('weight').filter(l=>l.date===d).sort((a,b)=>b.ts-a.ts)[0];return w?w.kg:null}),'kg',1),pwd&&planOn()?`<span class="tgt">target ${f2(pwd.tw)}</span>`:'')}
   ${kpi('c-water','Air minum',pc(ml,goal.water),ml,' / '+goal.water+' ml','',ml/goal.water*100,`<form class="qf" onsubmit="return A.qwater(event)"><input name="ml" type="number" inputmode="numeric" min="1" placeholder="ml" aria-label="Jumlah air (ml)" required><button class="qa">+ Catat</button></form>`,mc(days.map(d=>sum('water','ml',d)),'ml'))}
   ${kpi('c-pee','Pee',null,cn('pee'),' kali hari ini','',null,`<button class="qa" onclick="A.qlog('pee')">+ Catat pee</button>`,mc(days.map(d=>cn2('pee',d)),'kali'))}
-  ${kpi('c-pup','Pup',null,cn('pup'),' kali hari ini','',null,`<button class="qa" onclick="A.qlog('pup')">+ Catat pup</button>`,mc(days.map(d=>cn2('pup',d)),'kali'))}
+  ${kpi('c-pup','Pup',null,cn('pup'),' kali hari ini',lastPupHtml(),null,`<button class="qa" onclick="A.qlog('pup')">+ Catat pup</button>`,mc(days.map(d=>cn2('pup',d)),'kali'))}
   ${kpi('c-work','Olahraga',pc(wkc,TB()),wkc,' / '+TB()+' kkal terbakar','',wkc/TB()*100,`<form class="qf" onsubmit="return A.qburn(event)"><input name="k" type="number" inputmode="numeric" min="1" placeholder="kkal terbakar" aria-label="Kalori terbakar" required><button class="qa">+ Catat</button></form>`,mc(days.map(d=>sum('workout','kcal',d)),'kkal'))}
   ${kpi('c-kcal','Kalori',pc(kc,TK()),kc,' / '+TK()+' kkal','',kc/TK()*100,`<form class="qf" onsubmit="return A.qkcal(event)"><input name="k" type="number" inputmode="numeric" min="1" placeholder="kkal" aria-label="Jumlah kalori" required><button class="qa">+ Catat</button></form>`,mc(days.map(d=>sum('meal','kcal',d)),'kkal'))}
   ${pwd?kpi('c-if','Puasa IF',null,pwd.ratio,'','',null,`<button class="qa" onclick="A.go('health')">Info & jadwal IF</button>`,ifClock(pwd)):''}
@@ -837,7 +884,7 @@ function vBB(){
     L.push(`<li><div><b>Minggu ${i+1}${i===pd.i?' (berjalan)':''}</b><span>${fd(w[0]).slice(0,5)}–${fd(e).slice(0,5)}: target akhir ${f2(w[6])} kg, ${a?`aktual ${fk(a.kg)} kg (${sg(a.kg-w[6])} kg dari target)`:'aktual belum dicatat'}</span></div></li>`)}
     wk=`<h2>Rekap mingguan</h2><ul class="list">${L.join('')}</ul>`}
   return`<div class="top"><h1>Diet</h1></div>
-  <form class="f fd" onsubmit="return A.weight(event)"><label>Berat badan hari ini (kg)<input name="w" type="number" inputmode="decimal" min="20" max="400" step="0.01" placeholder="00,00" value="${last?last.kg:''}" required></label><button class="btn">Simpan berat badan</button></form>
+  <form class="f fd" onsubmit="return A.weight(event)"><label>Berat badan hari ini (kg)<input name="w" type="text" inputmode="decimal" autocomplete="off" maxlength="6" oninput="A.dec(this)" placeholder="00,00" value="${last?fk(last.kg):''}" required></label><button class="btn">Simpan berat badan</button></form>
   <h2>Rekap berat badan</h2>
   <section class="pc">${rows}${bar(Math.max(0,Math.round((total||0)*100)/100),PLAN_W0-PLAN_W1,'Penurunan menuju '+PLAN_W1+' kg','kg')}</section>
   <h2>Rekomendasi target</h2>${recBB()}
@@ -884,7 +931,7 @@ function twTable(p){
   return`<h2>Target turun berat badan</h2><section class="pc"><p class="mute" style="margin:0 0 12px">Target per minggu mengikuti jadwal IF. Turun per minggu dihitung dari target akhir minggu sebelumnya, dan total turun dihitung dari ${PLAN_W0} kg.</p>
   <div class="twb"><table class="tw"><thead><tr><th>Mgn</th><th>Tanggal</th><th>Jadwal IF</th><th>Target (kg)</th><th>Turun (g)</th><th>Total (g)</th></tr></thead><tbody>${rows}</tbody></table></div></section>`}
 function vIF(){const p=planDay(TODAY());
-  return`<h1>Puasa IF</h1>${p?`<section class="pc" style="margin-top:16px;--ac:var(--c-if)"><h3>Hari ini</h3>${ifClock(p)}</section>`:''}${ifInfo()}${twTable(p)}`}
+  return`<h1>Puasa IF</h1>${p?`<section class="pc" style="margin-top:16px;--ac:var(--c-if)"><h3>Hari ini</h3>${ifClock(p)}</section>`:''}${ifLog()}${ifInfo()}${twTable(p)}`}
 const V={home:vHome,health:vHealth,analysis:vAnalysis,settings:vSettings,work:vWork,diet:vDiet,bb:vBB,if:vIF,cycle:vCycle,pee:vPee,pup:vPup};
 
 function render(){
